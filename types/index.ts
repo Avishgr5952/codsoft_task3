@@ -1,216 +1,211 @@
-export type Role = 'ADMIN' | 'TEACHER' | 'STUDENT';
+export type Role = 'CANDIDATE' | 'RECRUITER' | 'ADMIN';
 
-export type AttendanceStatus = 'PRESENT' | 'ABSENT' | 'LATE';
+export type UserStatus = 'ACTIVE' | 'INACTIVE';
 
-export type PaymentStatus = 'PAID' | 'PARTIAL' | 'PENDING';
+export type JobType = 'FULL_TIME' | 'PART_TIME' | 'INTERNSHIP' | 'CONTRACT';
+
+export type WorkMode = 'REMOTE' | 'HYBRID' | 'ON_SITE';
+
+export type ExperienceLevel = 'ENTRY_LEVEL' | 'MID_LEVEL' | 'SENIOR_LEVEL' | 'LEAD_EXECUTIVE';
+
+export type JobStatus = 'DRAFT' | 'ACTIVE' | 'CLOSED';
+
+export type ApplicationStatus =
+  | 'APPLIED'
+  | 'UNDER_REVIEW'
+  | 'SHORTLISTED'
+  | 'INTERVIEW'
+  | 'SELECTED'
+  | 'REJECTED';
 
 export interface UserSession {
   id: string;
   email: string;
   name: string;
   role: Role;
-  studentId?: string;
-  teacherId?: string;
+  candidateProfileId?: string;
+  recruiterProfileId?: string;
+  companyId?: string;
 }
 
-export interface DepartmentItem {
+export interface CompanyItem {
   id: string;
-  code: string;
   name: string;
+  logoUrl?: string | null;
+  website?: string | null;
+  industry?: string | null;
+  location?: string | null;
+  companySize?: string | null;
   description?: string | null;
+  foundedYear?: number | null;
+  linkedinUrl?: string | null;
+  twitterUrl?: string | null;
   _count?: {
-    students: number;
-    teachers: number;
-    subjects: number;
+    jobs: number;
+    recruiters: number;
   };
 }
 
-export interface TeacherItem {
+export interface JobCategoryItem {
   id: string;
-  teacherId: string;
   name: string;
-  email: string;
-  phone?: string | null;
-  designation: string;
-  joiningDate: string;
-  status: string;
-  departmentId: string;
-  department?: {
-    id: string;
-    code: string;
-    name: string;
+  slug: string;
+  description?: string | null;
+  icon?: string | null;
+  _count?: {
+    jobs: number;
   };
-  subjects?: Array<{
+}
+
+export interface JobItem {
+  id: string;
+  title: string;
+  description: string;
+  responsibilities?: string | null;
+  requirements?: string | null;
+  benefits?: string | null;
+  skills: string[];
+  jobType: JobType;
+  workMode: WorkMode;
+  experienceLevel: ExperienceLevel;
+  location: string;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  salaryCurrency: string;
+  deadline?: string | null;
+  status: JobStatus;
+  viewsCount: number;
+  featured: boolean;
+  companyId: string;
+  company?: CompanyItem;
+  recruiterId?: string | null;
+  categoryId: string;
+  category?: JobCategoryItem;
+  createdAt: string;
+  updatedAt: string;
+  isSaved?: boolean;
+  hasApplied?: boolean;
+  _count?: {
+    applications: number;
+    savedBy: number;
+  };
+}
+
+export interface ResumeItem {
+  id: string;
+  candidateProfileId: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number;
+  fileType: string;
+  isDefault: boolean;
+  uploadedAt: string;
+}
+
+export interface EducationItem {
+  id: string;
+  institution: string;
+  degree: string;
+  fieldOfStudy?: string | null;
+  startDate: string;
+  endDate?: string | null;
+  grade?: string | null;
+}
+
+export interface ExperienceItem {
+  id: string;
+  company: string;
+  title: string;
+  location?: string | null;
+  startDate: string;
+  endDate?: string | null;
+  current: boolean;
+  description?: string | null;
+}
+
+export interface SkillItem {
+  id: string;
+  name: string;
+  category?: string | null;
+  yearsOfExperience?: number | null;
+}
+
+export interface CandidateProfileItem {
+  id: string;
+  userId: string;
+  user?: {
     id: string;
-    code: string;
     name: string;
-    semester: number;
+    email: string;
+    phone?: string | null;
+    status: UserStatus;
+  };
+  headline?: string | null;
+  bio?: string | null;
+  location?: string | null;
+  photoUrl?: string | null;
+  linkedinUrl?: string | null;
+  githubUrl?: string | null;
+  portfolioUrl?: string | null;
+  resumes?: ResumeItem[];
+  educations?: EducationItem[];
+  experiences?: ExperienceItem[];
+  skills?: Array<{
+    id: string;
+    skillId: string;
+    yearsOfExperience?: number | null;
+    skill: SkillItem;
   }>;
+  applications?: ApplicationItem[];
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface StudentItem {
+export interface ApplicationItem {
   id: string;
-  studentId: string;
-  firstName: string;
-  lastName: string;
-  name?: string;
-  email: string;
-  phone?: string | null;
-  dateOfBirth?: string | null;
-  gender?: string | null;
-  address?: string | null;
-  departmentId: string;
-  department?: {
-    id: string;
-    code: string;
-    name: string;
-  };
-  course: string;
-  semester: number;
-  section: string;
-  admissionDate: string;
-  profilePhoto?: string | null;
-  status: string;
-}
-
-export interface SubjectItem {
-  id: string;
-  code: string;
-  name: string;
-  departmentId: string;
-  department?: {
-    id: string;
-    code: string;
-    name: string;
-  };
-  semester: number;
-  credits: number;
-  teacherId?: string | null;
-  teacher?: {
-    id: string;
-    name: string;
-    teacherId: string;
-  } | null;
-}
-
-export interface AttendanceRecord {
-  id: string;
-  studentId: string;
-  student?: {
-    id: string;
-    studentId: string;
-    firstName: string;
-    lastName: string;
-  };
-  subjectId: string;
-  subject?: {
-    id: string;
-    code: string;
-    name: string;
-  };
-  date: string;
-  status: AttendanceStatus;
-  remarks?: string | null;
-}
-
-export interface ExamItem {
-  id: string;
-  examCode: string;
-  name: string;
-  departmentId: string;
-  department?: {
-    id: string;
-    code: string;
-    name: string;
-  };
-  subjectId: string;
-  subject?: {
-    id: string;
-    code: string;
-    name: string;
-  };
-  semester: number;
-  examDate: string;
-  startTime?: string | null;
-  durationMinutes: number;
-  maxMarks: number;
-  passMarks: number;
-  _count?: {
-    results: number;
-  };
-}
-
-export interface ExamResultItem {
-  id: string;
-  examId: string;
-  exam?: {
-    id: string;
-    name: string;
-    examCode: string;
-    maxMarks: number;
-    subject?: {
-      code: string;
-      name: string;
-    };
-  };
-  studentId: string;
-  student?: {
-    id: string;
-    studentId: string;
-    firstName: string;
-    lastName: string;
-  };
-  marksObtained: number;
-  maxMarks: number;
-  percentage: number;
-  grade: string;
-  status: 'PASS' | 'FAIL';
-  remarks?: string | null;
-}
-
-export interface FeePaymentItem {
-  id: string;
-  invoiceNumber: string;
-  studentId: string;
-  student?: {
-    id: string;
-    studentId: string;
-    firstName: string;
-    lastName: string;
-    department?: {
-      code: string;
-      name: string;
-    };
-  };
-  academicYear: string;
-  semester: number;
-  totalFee: number;
-  amountPaid: number;
-  remainingAmount: number;
-  paymentStatus: PaymentStatus;
-  paymentMethod?: string | null;
-  paymentDate?: string | null;
+  jobId: string;
+  job?: JobItem;
+  candidateProfileId: string;
+  candidateProfile?: CandidateProfileItem;
+  resumeId?: string | null;
+  resume?: ResumeItem | null;
+  coverLetter?: string | null;
+  additionalInfo?: string | null;
+  status: ApplicationStatus;
+  statusUpdatedAt: string;
   notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  interviews?: InterviewItem[];
 }
 
-export interface AcademicRecordItem {
+export interface SavedJobItem {
   id: string;
-  studentId: string;
-  student?: {
-    studentId: string;
-    firstName: string;
-    lastName: string;
-    department?: {
-      name: string;
-    };
-  };
-  academicYear: string;
-  semester: number;
-  totalSubjects: number;
-  totalCredits: number;
-  gpa?: number | null;
-  cgpa?: number | null;
-  attendancePercentage?: number | null;
-  overallGrade?: string | null;
+  userId: string;
+  jobId: string;
+  job: JobItem;
+  createdAt: string;
+}
+
+export interface InterviewItem {
+  id: string;
+  applicationId: string;
+  scheduledAt: string;
+  locationOrLink?: string | null;
+  interviewType: string;
   status: string;
+  notes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotificationItem {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: string;
+  link?: string | null;
+  read: boolean;
+  createdAt: string;
 }

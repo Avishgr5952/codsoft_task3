@@ -1,51 +1,52 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { getTokenFromRequest } from '@/lib/auth';
-import { successResponse, unauthorizedResponse } from '@/lib/api-response';
-import prisma from '@/lib/prisma';
+import { successResponse, unauthorizedResponse, errorResponse } from '@/lib/api-response';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
-    const tokenUser = getTokenFromRequest(req);
-    if (!tokenUser) {
-      return unauthorizedResponse('Not authenticated');
+    const session = getTokenFromRequest(req);
+    if (!session) {
+      return unauthorizedResponse();
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: tokenUser.id },
+      where: { id: session.id },
       select: {
         id: true,
         email: true,
         name: true,
+        phone: true,
         role: true,
+        status: true,
         createdAt: true,
-        student: {
+        candidateProfile: {
           select: {
             id: true,
-            studentId: true,
-            firstName: true,
-            lastName: true,
-            course: true,
-            semester: true,
-            section: true,
-            department: {
+            headline: true,
+            location: true,
+            photoUrl: true,
+          },
+        },
+        recruiterProfile: {
+          select: {
+            id: true,
+            designation: true,
+            company: {
               select: {
+                id: true,
                 name: true,
-                code: true,
+                logoUrl: true,
               },
             },
           },
         },
-        teacher: {
+        _count: {
           select: {
-            id: true,
-            teacherId: true,
-            name: true,
-            designation: true,
-            department: {
-              select: {
-                name: true,
-                code: true,
-              },
+            notifications: {
+              where: { read: false },
             },
           },
         },
@@ -53,11 +54,15 @@ export async function GET(req: NextRequest) {
     });
 
     if (!user) {
-      return unauthorizedResponse('User not found');
+      return unauthorizedResponse('User no longer exists');
     }
 
-    return successResponse(user);
+    return successResponse({
+      ...user,
+      unreadNotificationsCount: user._count.notifications,
+    });
   } catch (error: any) {
-    return unauthorizedResponse('Invalid or expired session');
+    console.error('Auth me error:', error);
+    return errorResponse('Failed to retrieve user session', 500);
   }
 }

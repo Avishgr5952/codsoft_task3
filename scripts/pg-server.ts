@@ -24,15 +24,14 @@ function isPortInUse(port: number, host = '127.0.0.1'): Promise<boolean> {
 
 async function startDatabase() {
   const inUse = await isPortInUse(5432);
+  const dbDir = path.join(process.cwd(), 'data', 'db');
+
   if (inUse) {
     console.log('PostgreSQL is already active and listening on 127.0.0.1:5432.');
-    console.log('Ready for connections: postgresql://postgres:password@127.0.0.1:5432/edumanage?schema=public');
-    // Keep process alive if run as daemon/background script
-    setInterval(() => {}, 60000);
+    console.log('Ready for connections: postgresql://postgres:password@127.0.0.1:5432/careerhub?schema=public');
     return;
   }
 
-  const dbDir = path.join(process.cwd(), 'data', 'db');
   const pg = new EmbeddedPostgres({
     databaseDir: dbDir,
     port: 5432,
@@ -51,14 +50,13 @@ async function startDatabase() {
   console.log('Official Embedded PostgreSQL Server is now running on 127.0.0.1:5432');
 
   try {
-    await pg.createDatabase('edumanage');
-    console.log('Created database "edumanage"');
+    await pg.createDatabase('careerhub');
+    console.log('Created database "careerhub"');
   } catch (e) {
     // Database already exists
   }
 
-  console.log('Ready for connections: postgresql://postgres:password@127.0.0.1:5432/edumanage?schema=public');
+  console.log('Ready for connections: postgresql://postgres:password@127.0.0.1:5432/careerhub?schema=public');
 }
 
 startDatabase().catch(console.error);
-

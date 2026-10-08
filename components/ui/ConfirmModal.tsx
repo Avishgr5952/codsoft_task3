@@ -14,6 +14,7 @@ interface ConfirmModalProps {
   confirmText?: string;
   cancelText?: string;
   isLoading?: boolean;
+  variant?: 'danger' | 'primary' | 'warning';
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({
@@ -25,6 +26,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   confirmText = 'Delete',
   cancelText = 'Cancel',
   isLoading = false,
+  variant = 'danger',
 }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} maxWidth="sm">
@@ -40,7 +42,12 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         <Button variant="secondary" size="md" onClick={onClose} disabled={isLoading}>
           {cancelText}
         </Button>
-        <Button variant="danger" size="md" onClick={onConfirm} isLoading={isLoading}>
+        <Button
+          variant={variant === 'primary' ? 'primary' : 'danger'}
+          size="md"
+          onClick={onConfirm}
+          isLoading={isLoading}
+        >
           {confirmText}
         </Button>
       </div>

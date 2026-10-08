@@ -26,21 +26,19 @@ function decodeJwtPayload(token: string): any {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get('edumanage_token')?.value;
+  const token = request.cookies.get('careerhub_token')?.value;
   const user = token ? decodeJwtPayload(token) : null;
 
-  // 1. If user visits /login while authenticated, redirect to their dashboard
-  if (pathname === '/login' || pathname === '/') {
+  // 1. If user visits /login or /register while already authenticated, redirect to appropriate dashboard
+  if (pathname === '/login' || pathname === '/register') {
     if (user) {
       if (user.role === 'ADMIN') {
         return NextResponse.redirect(new URL('/admin/dashboard', request.url));
-      } else if (user.role === 'TEACHER') {
-        return NextResponse.redirect(new URL('/teacher/dashboard', request.url));
-      } else if (user.role === 'STUDENT') {
-        return NextResponse.redirect(new URL('/student/dashboard', request.url));
+      } else if (user.role === 'RECRUITER') {
+        return NextResponse.redirect(new URL('/recruiter/dashboard', request.url));
+      } else if (user.role === 'CANDIDATE') {
+        return NextResponse.redirect(new URL('/candidate/dashboard', request.url));
       }
-    } else if (pathname === '/') {
-      return NextResponse.redirect(new URL('/login', request.url));
     }
   }
 
@@ -52,36 +50,34 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
     if (user.role !== 'ADMIN') {
-      // Unauthorized role redirection
-      if (user.role === 'TEACHER') {
-        return NextResponse.redirect(new URL('/teacher/dashboard', request.url));
+      if (user.role === 'RECRUITER') {
+        return NextResponse.redirect(new URL('/recruiter/dashboard', request.url));
       }
-      return NextResponse.redirect(new URL('/student/dashboard', request.url));
+      return NextResponse.redirect(new URL('/candidate/dashboard', request.url));
     }
   }
 
-  // 3. Protect Teacher routes
-  if (pathname.startsWith('/teacher')) {
+  // 3. Protect Recruiter routes
+  if (pathname.startsWith('/recruiter')) {
     if (!user) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
-    if (user.role !== 'TEACHER' && user.role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/student/dashboard', request.url));
+    if (user.role !== 'RECRUITER' && user.role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/candidate/dashboard', request.url));
     }
   }
 
-  // 4. Protect Student routes
-  if (pathname.startsWith('/student')) {
+  // 4. Protect Candidate routes
+  if (pathname.startsWith('/candidate')) {
     if (!user) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
-    // Students can access, Admin can also inspect if needed
-    if (user.role !== 'STUDENT' && user.role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/teacher/dashboard', request.url));
+    if (user.role !== 'CANDIDATE' && user.role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/recruiter/dashboard', request.url));
     }
   }
 
@@ -89,5 +85,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/login', '/admin/:path*', '/teacher/:path*', '/student/:path*'],
+  matcher: ['/login', '/register', '/admin/:path*', '/recruiter/:path*', '/candidate/:path*'],
 };

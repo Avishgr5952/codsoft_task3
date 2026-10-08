@@ -38,5 +38,6 @@ next-env.d.ts
 *.db-journal
 /data/
 /prisma/pgdata/
+/scratch/
 
 

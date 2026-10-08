@@ -6,8 +6,8 @@ import { ToastProvider } from '@/components/ui/Toast';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'EduManage – Student Management System',
-  description: 'Modern, responsive full-stack education management platform for managing students, teachers, attendance, exams, fees, and academic records.',
+  title: 'CareerHub – Job Portal | Connect Talent with Opportunity',
+  description: 'Connect talent with opportunity. CareerHub is the centralized recruitment platform connecting job seekers, candidates, and hiring companies.',
 };
 
 export default function RootLayout({

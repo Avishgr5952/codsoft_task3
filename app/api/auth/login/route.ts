@@ -1,26 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { NextRequest } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { comparePassword, signJwtToken } from '@/lib/jwt';
 import { successResponse, errorResponse } from '@/lib/api-response';
 import { AUTH_COOKIE_NAME } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { email, password } = body;
+    const { email, password } = await req.json();
 
     if (!email || !password) {
-      return errorResponse('Email/Username and password are required', 400);
+      return errorResponse('Email and password are required', 400);
     }
 
-    const cleanEmail = email.trim().toLowerCase();
-
-    // Find user by email
     const user = await prisma.user.findUnique({
-      where: { email: cleanEmail },
+      where: { email: email.toLowerCase().trim() },
       include: {
-        student: true,
-        teacher: true,
+        candidateProfile: true,
+        recruiterProfile: {
+          include: {
+            company: true,
+          },
+        },
       },
     });
 
@@ -28,45 +28,46 @@ export async function POST(req: NextRequest) {
       return errorResponse('Invalid email or password', 401);
     }
 
-    // Compare password
-    const isPasswordValid = await comparePassword(password, user.password);
-    if (!isPasswordValid) {
+    if (user.status === 'INACTIVE') {
+      return errorResponse('Your account has been deactivated. Please contact support.', 403);
+    }
+
+    const isValidPassword = await comparePassword(password, user.password);
+    if (!isValidPassword) {
       return errorResponse('Invalid email or password', 401);
     }
 
-    // Determine dashboard redirect URL based on role
-    let redirectUrl = '/admin/dashboard';
-    if (user.role === 'TEACHER') {
-      redirectUrl = '/teacher/dashboard';
-    } else if (user.role === 'STUDENT') {
-      redirectUrl = '/student/dashboard';
-    }
-
-    const payload = {
+    const tokenPayload = {
       id: user.id,
       email: user.email,
       name: user.name,
       role: user.role,
-      studentId: user.student?.id,
-      teacherId: user.teacher?.id,
+      candidateProfileId: user.candidateProfile?.id,
+      recruiterProfileId: user.recruiterProfile?.id,
+      companyId: user.recruiterProfile?.companyId,
     };
 
-    const token = signJwtToken(payload);
+    const token = signJwtToken(tokenPayload);
 
-    const response = NextResponse.json({
-      success: true,
-      message: 'Login successful',
-      data: {
-        user: payload,
-        redirectUrl,
+    const response = successResponse(
+      {
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          phone: user.phone,
+          candidateProfileId: user.candidateProfile?.id,
+          recruiterProfileId: user.recruiterProfile?.id,
+          company: user.recruiterProfile?.company,
+        },
         token,
       },
-    });
+      'Login successful'
+    );
 
     // Set secure HTTP-only cookie
-    response.cookies.set({
-      name: AUTH_COOKIE_NAME,
-      value: token,
+    response.cookies.set(AUTH_COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -77,6 +78,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error: any) {
     console.error('Login error:', error);
-    return errorResponse('An unexpected error occurred during login. Please try again.', 500);
+    return errorResponse('Internal server error during login', 500, error.message);
   }
 }

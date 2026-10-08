@@ -1,112 +1,122 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Users,
-  GraduationCap,
-  Building2,
-  BookOpen,
-  CalendarCheck,
-  FileSpreadsheet,
-  CreditCard,
-  Award,
+  Briefcase,
   BarChart3,
   Settings,
   LogOut,
   X,
+  Shield,
 } from 'lucide-react';
+import { UserSession } from '@/types';
 
-interface SidebarProps {
-  onCloseMobile?: () => void;
+interface AdminSidebarProps {
+  user: UserSession | null;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export const AdminSidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
+export const AdminSidebar: React.FC<AdminSidebarProps> = ({ user, isOpen, onClose }) => {
   const pathname = usePathname();
+  const router = useRouter();
 
   const navItems = [
-    { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-    { label: 'Students', href: '/admin/students', icon: Users },
-    { label: 'Teachers', href: '/admin/teachers', icon: GraduationCap },
-    { label: 'Departments', href: '/admin/departments', icon: Building2 },
-    { label: 'Subjects', href: '/admin/subjects', icon: BookOpen },
-    { label: 'Attendance', href: '/admin/attendance', icon: CalendarCheck },
-    { label: 'Examinations', href: '/admin/examinations', icon: FileSpreadsheet },
-    { label: 'Fees', href: '/admin/fees', icon: CreditCard },
-    { label: 'Academic Records', href: '/admin/records', icon: Award },
-    { label: 'Reports', href: '/admin/reports', icon: BarChart3 },
-    { label: 'Settings', href: '/admin/settings', icon: Settings },
+    { label: 'Admin Overview', href: '/admin/dashboard', icon: LayoutDashboard },
+    { label: 'User Management', href: '/admin/users', icon: Users },
+    { label: 'Job Moderation', href: '/admin/jobs', icon: Briefcase },
+    { label: 'Platform Analytics', href: '/admin/analytics', icon: BarChart3 },
+    { label: 'System Settings', href: '/admin/settings', icon: Settings },
   ];
 
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-      window.location.href = '/login';
+      router.push('/login');
+      router.refresh();
     } catch (e) {
-      window.location.href = '/login';
+      router.push('/login');
     }
   };
 
   return (
-    <div className="flex h-full flex-col justify-between bg-slate-900 text-slate-300 w-64 border-r border-slate-800">
-      <div>
-        {/* Header / Brand */}
-        <div className="flex h-16 items-center justify-between px-6 border-b border-slate-800/80">
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-500 to-blue-600 text-white shadow-md shadow-indigo-500/20">
-              <GraduationCap className="h-5 w-5" />
+    <>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      <aside
+        className={`fixed top-0 bottom-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-white transition-transform duration-200 lg:static lg:translate-x-0 ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="flex h-16 items-center justify-between border-b border-slate-100 px-6">
+          <a href="/" className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-600 text-white shadow-sm shadow-rose-200">
+              <Shield className="h-5 w-5" />
             </div>
-            <div>
-              <span className="font-bold text-white text-base tracking-tight">EduManage</span>
-              <p className="text-[10px] uppercase font-semibold tracking-wider text-indigo-400">Admin Portal</p>
-            </div>
-          </div>
-          {onCloseMobile && (
-            <button
-              onClick={onCloseMobile}
-              className="lg:hidden rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          )}
+            <span className="font-bold text-slate-900 text-lg">
+              Career<span className="text-rose-600">Admin</span>
+            </span>
+          </a>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1 text-slate-600 hover:bg-slate-100 lg:hidden"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
-        {/* Navigation list */}
-        <nav className="mt-4 px-3 space-y-1">
+        {user && (
+          <div className="mx-4 mt-4 p-3 rounded-xl bg-rose-50/60 border border-rose-100 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-rose-600 text-white font-bold flex items-center justify-center shadow-sm">
+              {user.name?.charAt(0) || 'A'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-slate-800 truncate">{user.name}</p>
+              <p className="text-[11px] text-rose-600 font-semibold">Administrator</p>
+            </div>
+          </div>
+        )}
+
+        <nav className="flex-1 space-y-1 overflow-y-auto p-4">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+            const isActive = pathname === item.href;
             return (
-              <Link
+              <a
                 key={item.href}
                 href={item.href}
-                onClick={onCloseMobile}
-                className={`flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-all ${
+                onClick={onClose}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-semibold transition-all ${
                   isActive
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-rose-600 text-white shadow-sm shadow-rose-200'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
               >
-                <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-slate-600'}`} />
                 {item.label}
-              </Link>
+              </a>
             );
           })}
         </nav>
-      </div>
 
-      {/* Footer / Logout */}
-      <div className="p-4 border-t border-slate-800/80">
-        <button
-          onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
-        >
-          <LogOut className="h-4 w-4" />
-          Logout
-        </button>
-      </div>
-    </div>
+        <div className="border-t border-slate-100 p-4">
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
+        </div>
+      </aside>
+    </>
   );
 };

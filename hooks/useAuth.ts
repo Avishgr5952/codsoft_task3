@@ -19,8 +19,9 @@ export function useAuth() {
               email: data.data.email,
               name: data.data.name,
               role: data.data.role,
-              studentId: data.data.student?.id,
-              teacherId: data.data.teacher?.id,
+              candidateProfileId: data.data.candidateProfile?.id,
+              recruiterProfileId: data.data.recruiterProfile?.id,
+              companyId: data.data.recruiterProfile?.company?.id,
             });
           } else {
             setUser(null);

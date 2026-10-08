@@ -2,9 +2,10 @@ import React from 'react';
 
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'secondary';
+  variant?: 'primary' | 'success' | 'warning' | 'danger' | 'info' | 'secondary' | 'outline';
   size?: 'sm' | 'md';
   dot?: boolean;
+  className?: string;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
@@ -12,6 +13,7 @@ export const Badge: React.FC<BadgeProps> = ({
   variant = 'secondary',
   size = 'md',
   dot = false,
+  className = '',
 }) => {
   const variantStyles = {
     primary: 'bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-700/10',
@@ -20,6 +22,7 @@ export const Badge: React.FC<BadgeProps> = ({
     danger: 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-600/20',
     info: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-600/20',
     secondary: 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-600/10',
+    outline: 'bg-white text-slate-700 ring-1 ring-inset ring-slate-300',
   };
 
   const dotColors = {
@@ -29,6 +32,7 @@ export const Badge: React.FC<BadgeProps> = ({
     danger: 'bg-rose-500',
     info: 'bg-sky-500',
     secondary: 'bg-slate-500',
+    outline: 'bg-slate-400',
   };
 
   const sizeStyles = {
@@ -38,7 +42,7 @@ export const Badge: React.FC<BadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full ${sizeStyles[size]} ${variantStyles[variant]}`}
+      className={`inline-flex items-center gap-1.5 rounded-full ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
     >
       {dot && <span className={`h-1.5 w-1.5 rounded-full ${dotColors[variant]}`} />}
       {children}

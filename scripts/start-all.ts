@@ -32,16 +32,17 @@ async function main() {
   const envPath = path.join(root, '.env');
   const envExamplePath = path.join(root, '.env.example');
   if (!fs.existsSync(envPath) && fs.existsSync(envExamplePath)) {
-    console.log('[EduManage] Initializing .env from .env.example...');
+    console.log('[CareerHub] Initializing .env from .env.example...');
     fs.copyFileSync(envExamplePath, envPath);
   }
 
   // 2. Ensure PostgreSQL is up
   const pgRunning = await isPortInUse(5432);
+  let pgInstance: any = null;
   if (!pgRunning) {
-    console.log('[EduManage] Starting local embedded PostgreSQL server on port 5432...');
+    console.log('[CareerHub] Starting local embedded PostgreSQL server on port 5432...');
     const dbDir = path.join(root, 'data', 'db');
-    const pg = new EmbeddedPostgres({
+    pgInstance = new EmbeddedPostgres({
       databaseDir: dbDir,
       port: 5432,
       user: 'postgres',
@@ -49,36 +50,37 @@ async function main() {
       persistent: true,
     });
     try {
-      await pg.initialise();
+      await pgInstance.initialise();
     } catch {
       // already initialized
     }
-    await pg.start();
+    await pgInstance.start();
     try {
-      await pg.createDatabase('edumanage');
+      await pgInstance.createDatabase('careerhub');
     } catch {
       // already exists
     }
-    console.log('[EduManage] PostgreSQL is running on port 5432.');
+    console.log('[CareerHub] PostgreSQL is running on port 5432.');
   } else {
-    console.log('[EduManage] PostgreSQL is already active on port 5432.');
+    console.log('[CareerHub] PostgreSQL is already active on port 5432.');
   }
 
-  // 3. Check database seeding
+  // 3. Check database push & seeding
   const prisma = new PrismaClient();
   try {
     const count = await prisma.user.count();
     if (count === 0) {
-      console.log('[EduManage] Empty database detected. Auto-seeding initial demo data...');
+      console.log('[CareerHub] Empty database detected. Auto-seeding initial demo data...');
       const seedScript = spawn('npx.cmd', ['tsx', 'prisma/seed.ts'], { stdio: 'inherit', shell: true });
       await new Promise((resolve) => seedScript.on('close', resolve));
     } else {
-      console.log(`[EduManage] Database ready with ${count} users.`);
+      console.log(`[CareerHub] Database ready with ${count} users.`);
     }
   } catch (err: any) {
-    console.warn('[EduManage] Running prisma db push to synchronize schema...');
+    console.warn('[CareerHub] Synchronizing schema via prisma db push...');
     const pushCmd = spawn('npx.cmd', ['prisma', 'db', 'push', '--skip-generate'], { stdio: 'inherit', shell: true });
     await new Promise((resolve) => pushCmd.on('close', resolve));
+    console.log('[CareerHub] Seeding database...');
     const seedCmd = spawn('npx.cmd', ['tsx', 'prisma/seed.ts'], { stdio: 'inherit', shell: true });
     await new Promise((resolve) => seedCmd.on('close', resolve));
   } finally {
@@ -86,7 +88,7 @@ async function main() {
   }
 
   // 4. Start Next.js dev server
-  console.log('[EduManage] Launching Next.js development server...');
+  console.log('[CareerHub] Launching Next.js development server...');
   const nextDev = spawn('npx.cmd', ['next', 'dev'], { stdio: 'inherit', shell: true });
 
   nextDev.on('close', (code) => {
@@ -95,6 +97,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error('[EduManage] Startup error:', err);
+  console.error('[CareerHub] Startup error:', err);
   process.exit(1);
 });

@@ -1,15 +1,17 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { Role } from '@/types';
 
-const JWT_SECRET = process.env.AUTH_SECRET || 'edumanage_fallback_secret_key_2026';
+const JWT_SECRET = process.env.AUTH_SECRET || 'careerhub_fallback_secret_key_2026';
 
 export interface TokenPayload {
   id: string;
   email: string;
   name: string;
-  role: 'ADMIN' | 'TEACHER' | 'STUDENT';
-  studentId?: string;
-  teacherId?: string;
+  role: Role;
+  candidateProfileId?: string;
+  recruiterProfileId?: string;
+  companyId?: string;
 }
 
 export function signJwtToken(payload: TokenPayload): string {

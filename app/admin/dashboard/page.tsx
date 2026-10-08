@@ -1,379 +1,197 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect } from 'react';
+import { AppLayout } from '@/components/layout/AppLayout';
 import {
   Users,
-  GraduationCap,
-  BookOpen,
-  CalendarCheck,
-  CreditCard,
-  FileSpreadsheet,
-  ArrowUpRight,
-  Plus,
-  TrendingUp,
-  Clock,
-  Sparkles,
+  Briefcase,
+  Building2,
+  FileText,
+  Shield,
+  ArrowRight,
+  UserCheck,
+  AlertCircle,
 } from 'lucide-react';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { AppLayout } from '@/components/layout/AppLayout';
-import { useAuth } from '@/hooks/useAuth';
-import { DeptBarChart, AttendancePieChart, GradeBarChart } from '@/components/charts/DashboardCharts';
 
 export default function AdminDashboardPage() {
-  const { user, isLoading: authLoading } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchDashboard() {
-      try {
-        const res = await fetch('/api/dashboard/admin');
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success) {
-            setData(json.data);
-          }
-        }
-      } catch (e) {
-        console.error('Failed to load admin dashboard:', e);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchDashboard();
+    fetch('/api/admin/stats')
+      .then((res) => res.json())
+      .then((d) => {
+        if (d.success) setData(d.data);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  if (authLoading || !user) {
+  const stats = data?.stats || {
+    totalUsers: 0,
+    totalCandidates: 0,
+    totalRecruiters: 0,
+    totalJobs: 0,
+    activeJobs: 0,
+    totalApplications: 0,
+    totalCompanies: 0,
+  };
+
+  const recentUsers = data?.recentUsers || [];
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm font-medium text-slate-600">Loading EduManage...</p>
+      <AppLayout allowedRole="ADMIN">
+        <div className="space-y-6 animate-pulse">
+          <div className="h-32 bg-white rounded-3xl border border-slate-200" />
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
-  const summary = data?.summary || {
-    totalStudents: 0,
-    totalTeachers: 0,
-    totalSubjects: 0,
-    totalAttendance: 0,
-    pendingFees: 0,
-    collectedFees: 0,
-    upcomingExams: 0,
-  };
-
-  const statCards = [
-    {
-      title: 'Total Students',
-      value: summary.totalStudents,
-      subtitle: 'Active Enrollments',
-      icon: Users,
-      color: 'bg-indigo-500',
-      lightColor: 'bg-indigo-50 text-indigo-600',
-      href: '/admin/students',
-    },
-    {
-      title: 'Total Teachers',
-      value: summary.totalTeachers,
-      subtitle: 'Faculty Members',
-      icon: GraduationCap,
-      color: 'bg-emerald-500',
-      lightColor: 'bg-emerald-50 text-emerald-600',
-      href: '/admin/teachers',
-    },
-    {
-      title: 'Courses & Subjects',
-      value: summary.totalSubjects,
-      subtitle: 'Across Departments',
-      icon: BookOpen,
-      color: 'bg-amber-500',
-      lightColor: 'bg-amber-50 text-amber-600',
-      href: '/admin/subjects',
-    },
-    {
-      title: 'Attendance Records',
-      value: summary.totalAttendance,
-      subtitle: 'Total Logs',
-      icon: CalendarCheck,
-      color: 'bg-teal-500',
-      lightColor: 'bg-teal-50 text-teal-600',
-      href: '/admin/attendance',
-    },
-    {
-      title: 'Pending Fees',
-      value: `₹${Number(summary.pendingFees).toLocaleString()}`,
-      subtitle: `Collected: ₹${Number(summary.collectedFees).toLocaleString()}`,
-      icon: CreditCard,
-      color: 'bg-rose-500',
-      lightColor: 'bg-rose-50 text-rose-600',
-      href: '/admin/fees',
-    },
-    {
-      title: 'Upcoming Exams',
-      value: summary.upcomingExams,
-      subtitle: 'Scheduled this session',
-      icon: FileSpreadsheet,
-      color: 'bg-sky-500',
-      lightColor: 'bg-sky-50 text-sky-600',
-      href: '/admin/examinations',
-    },
-  ];
-
   return (
-    <AppLayout user={user}>
-      <div className="space-y-6">
-        {/* Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              Welcome back, {user.name}
+    <AppLayout allowedRole="ADMIN">
+      <div className="space-y-8 max-w-7xl mx-auto">
+        {/* Banner */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-tr from-rose-900 via-rose-800 to-indigo-900 text-white shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 text-rose-200 text-xs font-semibold backdrop-blur-sm border border-rose-500/30">
+              <Shield className="h-3.5 w-3.5" />
+              Platform Administration
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              CareerHub Admin Console
             </h1>
-            <p className="text-sm text-slate-500 mt-0.5">
-              Here is what is happening across EduManage academic administration today.
+            <p className="text-xs sm:text-sm text-rose-100 max-w-xl">
+              System governance, user account management, and recruitment listings moderation
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Link href="/admin/students">
-              <Button size="sm" variant="primary" icon={<Plus className="w-4 h-4" />}>
-                Add Student
-              </Button>
-            </Link>
-            <Link href="/admin/attendance">
-              <Button size="sm" variant="outline" icon={<CalendarCheck className="w-4 h-4" />}>
-                Mark Attendance
-              </Button>
-            </Link>
-            <Link href="/admin/examinations">
-              <Button size="sm" variant="outline" icon={<FileSpreadsheet className="w-4 h-4" />}>
-                New Exam
-              </Button>
-            </Link>
+          <div className="flex items-center gap-3">
+            <a
+              href="/admin/users"
+              className="px-4 py-2.5 rounded-xl bg-white text-rose-900 text-xs font-bold hover:bg-rose-50 transition-colors shadow-sm"
+            >
+              Manage Users
+            </a>
+            <a
+              href="/admin/jobs"
+              className="px-4 py-2.5 rounded-xl bg-rose-700/80 hover:bg-rose-700 text-white text-xs font-bold border border-rose-500/40 transition-colors"
+            >
+              Moderate Jobs
+            </a>
           </div>
         </div>
 
-        {/* Stat Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {statCards.map((card, idx) => {
-            const Icon = card.icon;
-            return (
-              <Card key={idx} className="relative overflow-hidden hover:shadow-md transition-shadow">
-                <CardContent className="p-5">
-                  <div className="flex items-center justify-between">
+        {/* METRICS GRID */}
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3">
+            System Metrics Summary
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <span className="text-xs font-semibold text-slate-600">Total Users</span>
+              <div className="text-2xl font-extrabold text-slate-900 mt-1">{stats.totalUsers}</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <span className="text-xs font-semibold text-indigo-600">Candidates</span>
+              <div className="text-2xl font-extrabold text-indigo-700 mt-1">{stats.totalCandidates}</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <span className="text-xs font-semibold text-blue-600">Recruiters</span>
+              <div className="text-2xl font-extrabold text-blue-700 mt-1">{stats.totalRecruiters}</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <span className="text-xs font-semibold text-emerald-600">Companies</span>
+              <div className="text-2xl font-extrabold text-emerald-700 mt-1">{stats.totalCompanies}</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <span className="text-xs font-semibold text-slate-600">Total Jobs</span>
+              <div className="text-2xl font-extrabold text-slate-900 mt-1">{stats.totalJobs}</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm">
+              <span className="text-xs font-semibold text-teal-600">Active Jobs</span>
+              <div className="text-2xl font-extrabold text-teal-700 mt-1">{stats.activeJobs}</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm col-span-2 sm:col-span-1">
+              <span className="text-xs font-semibold text-purple-600">Applications</span>
+              <div className="text-2xl font-extrabold text-purple-700 mt-1">{stats.totalApplications}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* TWO-COLUMN: RECENT REGISTRATIONS & ROLE DISTRIBUTION */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-900">Recent User Registrations</h2>
+              <a href="/admin/users" className="text-xs font-bold text-rose-600 hover:underline">
+                View All Users →
+              </a>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden divide-y divide-slate-100">
+              {recentUsers.map((u: any) => (
+                <div key={u.id} className="p-4 sm:p-5 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center shrink-0 text-xs">
+                      {u.name?.charAt(0) || 'U'}
+                    </div>
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                        {card.title}
-                      </p>
-                      {loading ? (
-                        <Skeleton className="h-8 w-24 my-1" />
-                      ) : (
-                        <h3 className="text-2xl font-bold text-slate-900 mt-1">{card.value}</h3>
-                      )}
-                      <p className="text-xs text-slate-500 mt-1">{card.subtitle}</p>
-                    </div>
-                    <div className={`w-12 h-12 rounded-xl ${card.lightColor} flex items-center justify-center`}>
-                      <Icon className="w-6 h-6" />
+                      <span className="text-xs sm:text-sm font-bold text-slate-900 block">{u.name}</span>
+                      <span className="text-[11px] text-slate-600">{u.email}</span>
                     </div>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
-                    <Link
-                      href={card.href}
-                      className="font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1 group"
-                    >
-                      View details
-                      <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                    </Link>
+
+                  <div className="flex items-center gap-2">
+                    <Badge variant={u.role === 'ADMIN' ? 'danger' : u.role === 'RECRUITER' ? 'warning' : 'primary'} size="sm">
+                      {u.role}
+                    </Badge>
+                    <Badge variant={u.status === 'ACTIVE' ? 'success' : 'danger'} size="sm">
+                      {u.status}
+                    </Badge>
                   </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Department Distribution */}
-          <Card>
-            <CardHeader
-              title="Students by Department"
-              subtitle="Enrolled active students distribution"
-            />
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-64 w-full" />
-              ) : (
-                <DeptBarChart data={data?.studentByDept || []} />
-              )}
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 border-b border-slate-100 pb-2">
+                Platform Breakdown
+              </h3>
 
-          {/* Attendance Overview */}
-          <Card>
-            <CardHeader
-              title="Attendance Overview"
-              subtitle="Present, Absent, and Late records breakdown"
-            />
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-64 w-full" />
-              ) : (
-                <AttendancePieChart data={data?.attendanceOverview || []} />
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Exam Grade Distribution */}
-          <Card className="lg:col-span-2">
-            <CardHeader
-              title="Academic Exam Performance"
-              subtitle="Grade breakdown across examinations (A+, A, B, C, D, F)"
-            />
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-64 w-full" />
-              ) : (
-                <GradeBarChart data={data?.gradeDistribution || []} />
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Activity Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Students */}
-          <Card>
-            <CardHeader
-              title="Recent Student Admissions"
-              subtitle="Latest enrolled students in EduManage"
-              action={
-                <Link href="/admin/students" className="text-xs text-indigo-600 font-semibold hover:underline">
-                  View All
-                </Link>
-              }
-            />
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-semibold text-slate-500">
-                    <tr>
-                      <th className="px-5 py-3">Student</th>
-                      <th className="px-4 py-3">Dept</th>
-                      <th className="px-4 py-3">Semester</th>
-                      <th className="px-5 py-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {loading ? (
-                      <tr>
-                        <td colSpan={4} className="p-4">
-                          <Skeleton className="h-16 w-full" />
-                        </td>
-                      </tr>
-                    ) : (data?.recentStudents || []).length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="p-4 text-center text-slate-400 text-xs">
-                          No recent students
-                        </td>
-                      </tr>
-                    ) : (
-                      data.recentStudents.map((st: any) => (
-                        <tr key={st.id} className="hover:bg-slate-50/70">
-                          <td className="px-5 py-3 font-medium text-slate-900">
-                            <div>{st.firstName} {st.lastName}</div>
-                            <div className="text-xs text-slate-400">{st.studentId}</div>
-                          </td>
-                          <td className="px-4 py-3">{st.department.code}</td>
-                          <td className="px-4 py-3">Sem {st.semester} - {st.section}</td>
-                          <td className="px-5 py-3">
-                            <Badge variant={st.status === 'Active' ? 'success' : 'secondary'} size="sm">
-                              {st.status}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+              <div className="space-y-3 text-xs">
+                {data?.userDistribution?.map((item: any) => (
+                  <div key={item.name} className="flex items-center justify-between">
+                    <span className="flex items-center gap-2 text-slate-600">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                      {item.name}
+                    </span>
+                    <span className="font-extrabold text-slate-900">{item.value}</span>
+                  </div>
+                ))}
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Recent Fee Payments */}
-          <Card>
-            <CardHeader
-              title="Recent Fee Transactions"
-              subtitle="Latest fee payments logged"
-              action={
-                <Link href="/admin/fees" className="text-xs text-indigo-600 font-semibold hover:underline">
-                  View All
-                </Link>
-              }
-            />
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-50 border-b border-slate-100 text-xs uppercase font-semibold text-slate-500">
-                    <tr>
-                      <th className="px-5 py-3">Invoice</th>
-                      <th className="px-4 py-3">Student</th>
-                      <th className="px-4 py-3">Paid</th>
-                      <th className="px-5 py-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {loading ? (
-                      <tr>
-                        <td colSpan={4} className="p-4">
-                          <Skeleton className="h-16 w-full" />
-                        </td>
-                      </tr>
-                    ) : (data?.recentPayments || []).length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="p-4 text-center text-slate-400 text-xs">
-                          No recent fee transactions
-                        </td>
-                      </tr>
-                    ) : (
-                      data.recentPayments.map((p: any) => (
-                        <tr key={p.id} className="hover:bg-slate-50/70">
-                          <td className="px-5 py-3 font-mono text-xs text-indigo-600 font-semibold">
-                            {p.invoiceNumber}
-                          </td>
-                          <td className="px-4 py-3 font-medium text-slate-900">
-                            {p.student?.firstName} {p.student?.lastName}
-                          </td>
-                          <td className="px-4 py-3 font-semibold text-slate-800">
-                            ₹{Number(p.amountPaid).toLocaleString()}
-                          </td>
-                          <td className="px-5 py-3">
-                            <Badge
-                              variant={
-                                p.paymentStatus === 'PAID'
-                                  ? 'success'
-                                  : p.paymentStatus === 'PARTIAL'
-                                  ? 'warning'
-                                  : 'danger'
-                              }
-                              size="sm"
-                            >
-                              {p.paymentStatus}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+              <div className="pt-3 border-t border-slate-100">
+                <a
+                  href="/admin/users"
+                  className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-xs font-bold transition-colors"
+                >
+                  <Users className="h-4 w-4" />
+                  Inspect All Accounts
+                </a>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
     </AppLayout>

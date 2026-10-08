@@ -9,246 +9,324 @@ datasource db {
 }
 
 enum Role {
+  CANDIDATE
+  RECRUITER
   ADMIN
-  TEACHER
-  STUDENT
 }
 
-enum AttendanceStatus {
-  PRESENT
-  ABSENT
-  LATE
+enum UserStatus {
+  ACTIVE
+  INACTIVE
 }
 
-enum PaymentStatus {
-  PAID
-  PARTIAL
-  PENDING
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  INTERNSHIP
+  CONTRACT
+}
+
+enum WorkMode {
+  REMOTE
+  HYBRID
+  ON_SITE
+}
+
+enum ExperienceLevel {
+  ENTRY_LEVEL
+  MID_LEVEL
+  SENIOR_LEVEL
+  LEAD_EXECUTIVE
+}
+
+enum JobStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+}
+
+enum ApplicationStatus {
+  APPLIED
+  UNDER_REVIEW
+  SHORTLISTED
+  INTERVIEW
+  SELECTED
+  REJECTED
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
+  id        String     @id @default(uuid())
+  email     String     @unique
   password  String
-  role      Role     @default(STUDENT)
   name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  phone     String?
+  role      Role       @default(CANDIDATE)
+  status    UserStatus @default(ACTIVE)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
-  student Student?
-  teacher Teacher?
+  candidateProfile CandidateProfile?
+  recruiterProfile RecruiterProfile?
+  savedJobs        SavedJob[]
+  notifications    Notification[]
 
   @@map("users")
 }
 
-model Department {
+model CandidateProfile {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  headline     String?
+  bio          String?  @db.Text
+  location     String?
+  photoUrl     String?
+  linkedinUrl  String?
+  githubUrl    String?
+  portfolioUrl String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  resumes      Resume[]
+  educations   Education[]
+  experiences  Experience[]
+  skills       CandidateSkill[]
+  applications Application[]
+
+  @@map("candidate_profiles")
+}
+
+model Company {
   id          String   @id @default(uuid())
-  code        String   @unique // e.g. "BCA", "BBA", "BCOM", "MCA"
-  name        String
-  description String?
+  name        String   @unique
+  logoUrl     String?
+  website     String?
+  industry    String?
+  location    String?
+  companySize String?
+  description String?  @db.Text
+  foundedYear Int?
+  linkedinUrl String?
+  twitterUrl  String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  students Student[]
-  teachers Teacher[]
-  subjects Subject[]
-  exams    Exam[]
+  recruiters RecruiterProfile[]
+  jobs       Job[]
 
-  @@map("departments")
+  @@map("companies")
 }
 
-model Teacher {
-  id           String      @id @default(uuid())
-  teacherId    String      @unique // e.g. "TCH-001"
-  userId       String?     @unique
-  user         User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name         String
-  email        String      @unique
-  phone        String?
-  designation  String      @default("Assistant Professor")
-  joiningDate  DateTime    @default(now())
-  status       String      @default("Active") // "Active", "Inactive"
-  departmentId String
-  department   Department  @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+model RecruiterProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  designation String?  @default("Talent Acquisition Lead")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  subjects           Subject[]
-  attendancesMarked  Attendance[]
+  jobs Job[]
 
-  @@map("teachers")
+  @@map("recruiter_profiles")
 }
 
-model Student {
-  id            String      @id @default(uuid())
-  studentId     String      @unique // e.g. "STU-2024-001"
-  userId        String?     @unique
-  user          User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  firstName     String
-  lastName      String
-  email         String      @unique
-  phone         String?
-  dateOfBirth   DateTime?
-  gender        String?     // "Male", "Female", "Other"
-  address       String?
-  departmentId  String
-  department    Department  @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  course        String      // e.g. "Bachelor of Computer Applications"
-  semester      Int         @default(1)
-  section       String      @default("A")
-  admissionDate DateTime    @default(now())
-  profilePhoto  String?
-  status        String      @default("Active") // "Active", "Inactive"
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+model JobCategory {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  createdAt   DateTime @default(now())
 
-  attendances     Attendance[]
-  examResults     ExamResult[]
-  feePayments     FeePayment[]
-  academicRecords AcademicRecord[]
+  jobs Job[]
 
-  @@map("students")
+  @@map("job_categories")
 }
 
-model Subject {
-  id           String      @id @default(uuid())
-  code         String      @unique // e.g. "BCA101"
-  name         String
-  departmentId String
-  department   Department  @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  semester     Int         @default(1)
-  credits      Int         @default(3)
-  teacherId    String?
-  teacher      Teacher?    @relation(fields: [teacherId], references: [id], onDelete: SetNull)
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+model Job {
+  id               String          @id @default(uuid())
+  title            String
+  description      String          @db.Text
+  responsibilities String?         @db.Text
+  requirements     String?         @db.Text
+  benefits         String?         @db.Text
+  skills           String[]
+  jobType          JobType         @default(FULL_TIME)
+  workMode         WorkMode        @default(HYBRID)
+  experienceLevel  ExperienceLevel @default(MID_LEVEL)
+  location         String
+  salaryMin        Float?
+  salaryMax        Float?
+  salaryCurrency   String          @default("USD")
+  deadline         DateTime?
+  status           JobStatus       @default(ACTIVE)
+  viewsCount       Int             @default(0)
+  featured         Boolean         @default(false)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
-  attendances Attendance[]
-  exams       Exam[]
+  companyId   String
+  company     Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  recruiterId String?
+  recruiter   RecruiterProfile? @relation(fields: [recruiterId], references: [id], onDelete: SetNull)
+  categoryId  String
+  category    JobCategory       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
 
-  @@map("subjects")
+  applications Application[]
+  savedBy      SavedJob[]
+
+  @@index([companyId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([jobType])
+  @@index([workMode])
+  @@index([location])
+  @@map("jobs")
 }
 
-model Attendance {
-  id        String           @id @default(uuid())
-  studentId String
-  student   Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  subjectId String
-  subject   Subject          @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  teacherId String?
-  teacher   Teacher?         @relation(fields: [teacherId], references: [id], onDelete: SetNull)
-  date      DateTime
-  status    AttendanceStatus @default(PRESENT)
-  remarks   String?
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+model Application {
+  id                 String            @id @default(uuid())
+  jobId              String
+  job                Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidateProfileId String
+  candidateProfile   CandidateProfile  @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+  resumeId           String?
+  resume             Resume?           @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  coverLetter        String?           @db.Text
+  additionalInfo     String?           @db.Text
+  status             ApplicationStatus @default(APPLIED)
+  statusUpdatedAt    DateTime          @default(now())
+  notes              String?           @db.Text
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
 
-  @@unique([studentId, subjectId, date])
-  @@index([studentId])
-  @@index([subjectId])
-  @@index([date])
-  @@map("attendances")
+  interviews Interview[]
+
+  @@unique([jobId, candidateProfileId])
+  @@index([jobId])
+  @@index([candidateProfileId])
+  @@index([status])
+  @@map("applications")
 }
 
-model Exam {
-  id              String      @id @default(uuid())
-  examCode        String      @unique // e.g. "EXAM-2024-SEM1-BCA"
-  name            String      // e.g. "Midterm Examination 2024"
-  departmentId    String
-  department      Department  @relation(fields: [departmentId], references: [id], onDelete: Restrict)
-  subjectId       String
-  subject         Subject     @relation(fields: [subjectId], references: [id], onDelete: Cascade)
-  semester        Int
-  examDate        DateTime
-  startTime       String?     @default("10:00 AM")
-  durationMinutes Int         @default(180)
-  maxMarks        Float       @default(100)
-  passMarks       Float       @default(40)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+model SavedJob {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 
-  results ExamResult[]
-
-  @@map("exams")
+  @@unique([userId, jobId])
+  @@index([userId])
+  @@index([jobId])
+  @@map("saved_jobs")
 }
 
-model ExamResult {
-  id            String   @id @default(uuid())
-  examId        String
-  exam          Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
-  studentId     String
-  student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  marksObtained Float
-  maxMarks      Float    @default(100)
-  percentage    Float
-  grade         String   // "A+", "A", "B", "C", "D", "F"
-  status        String   // "PASS", "FAIL"
-  remarks       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+model Resume {
+  id                 String           @id @default(uuid())
+  candidateProfileId String
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+  fileName           String
+  fileUrl            String
+  fileSize           Int
+  fileType           String
+  isDefault          Boolean          @default(false)
+  uploadedAt         DateTime         @default(now())
 
-  @@unique([examId, studentId])
-  @@index([studentId])
-  @@index([examId])
-  @@map("exam_results")
+  applications Application[]
+
+  @@index([candidateProfileId])
+  @@map("resumes")
 }
 
-model FeeStructure {
-  id           String       @id @default(uuid())
-  name         String       // e.g. "BCA 1st Year Tuition Fee"
-  departmentId String
-  academicYear String       // "2024-2025"
-  semester     Int
-  totalAmount  Float
-  dueDate      DateTime?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+model Skill {
+  id       String  @id @default(uuid())
+  name     String  @unique
+  category String?
 
-  feePayments FeePayment[]
+  candidateSkills CandidateSkill[]
 
-  @@map("fee_structures")
+  @@map("skills")
 }
 
-model FeePayment {
-  id              String        @id @default(uuid())
-  invoiceNumber   String        @unique // e.g. "INV-2024-001"
-  studentId       String
-  student         Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  feeStructureId  String?
-  feeStructure    FeeStructure? @relation(fields: [feeStructureId], references: [id], onDelete: SetNull)
-  academicYear    String        // "2024-2025"
-  semester        Int
-  totalFee        Float
-  amountPaid      Float         @default(0)
-  remainingAmount Float
-  paymentStatus   PaymentStatus @default(PENDING)
-  paymentMethod   String?       @default("Online") // "Online / Card", "Bank Transfer", "Cash"
-  paymentDate     DateTime?
-  notes           String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+model CandidateSkill {
+  id                 String           @id @default(uuid())
+  candidateProfileId String
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+  skillId            String
+  skill              Skill            @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  yearsOfExperience  Float?
 
-  @@index([studentId])
-  @@map("fee_payments")
+  @@unique([candidateProfileId, skillId])
+  @@index([candidateProfileId])
+  @@index([skillId])
+  @@map("candidate_skills")
 }
 
-model AcademicRecord {
-  id                   String   @id @default(uuid())
-  studentId            String
-  student              Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  academicYear         String   // "2024-2025"
-  semester             Int
-  totalSubjects        Int      @default(0)
-  totalCredits         Int      @default(0)
-  gpa                  Float?
-  cgpa                 Float?
-  attendancePercentage Float?
-  overallGrade         String?
-  status               String   @default("Completed") // "Completed", "In Progress"
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+model Education {
+  id                 String           @id @default(uuid())
+  candidateProfileId String
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+  institution        String
+  degree             String
+  fieldOfStudy       String?
+  startDate          DateTime
+  endDate            DateTime?
+  grade              String?
+  createdAt          DateTime         @default(now())
 
-  @@unique([studentId, academicYear, semester])
-  @@index([studentId])
-  @@map("academic_records")
+  @@index([candidateProfileId])
+  @@map("education")
+}
+
+model Experience {
+  id                 String           @id @default(uuid())
+  candidateProfileId String
+  candidateProfile   CandidateProfile @relation(fields: [candidateProfileId], references: [id], onDelete: Cascade)
+  company            String
+  title              String
+  location           String?
+  startDate          DateTime
+  endDate            DateTime?
+  current            Boolean          @default(false)
+  description        String?          @db.Text
+  createdAt          DateTime         @default(now())
+
+  @@index([candidateProfileId])
+  @@map("experience")
+}
+
+model Interview {
+  id             String      @id @default(uuid())
+  applicationId  String
+  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  scheduledAt    DateTime
+  locationOrLink String?
+  interviewType  String      @default("Technical Interview")
+  status         String      @default("SCHEDULED")
+  notes          String?     @db.Text
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([applicationId])
+  @@map("interviews")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String   @db.Text
+  type      String   @default("SYSTEM")
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([read])
+  @@map("notifications")
 }
